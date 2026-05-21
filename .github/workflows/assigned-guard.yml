@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   guard:
-    # Ignore PR comments
+    # Ignore pull request comments
     if: github.event.issue.pull_request == null
 
     runs-on: ubuntu-latest
@@ -22,11 +22,15 @@ jobs:
 
         with:
           script: |
+            // Safety guards
+            if (!context.payload.issue) return;
+            if (!context.payload.comment) return;
+
             const issue = context.payload.issue;
-            if (!issue) return;
 
             const comment =
-              context.payload.comment.body.toLowerCase();
+              context.payload.comment.body
+                .toLowerCase();
 
             const sender =
               context.payload.comment.user.login;
@@ -37,7 +41,9 @@ jobs:
               'github-actions[bot]'
             ];
 
-            if (ignoredUsers.includes(sender)) return;
+            if (ignoredUsers.includes(sender)) {
+              return;
+            }
 
             // Detect assignment request phrases
             const assignmentPhrases = [
@@ -61,7 +67,9 @@ jobs:
                 comment.includes(p)
               );
 
-            if (!isAskingForAssignment) return;
+            if (!isAskingForAssignment) {
+              return;
+            }
 
             // Prevent duplicate bot replies
             const comments =
@@ -76,7 +84,9 @@ jobs:
                 c.body.includes(`@${sender}`)
               );
 
-            if (alreadyReplied) return;
+            if (alreadyReplied) {
+              return;
+            }
 
             // Current assignees
             const assignees = issue.assignees || [];
